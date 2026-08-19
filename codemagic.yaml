@@ -1,0 +1,48 @@
+workflows:
+  nx-cheats-unsigned:
+    name: NX Cheats — IPA sem assinatura
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      vars:
+        SOURCE_ARCHIVE: NX-Cheats-unsigned-build-ready.zip
+        WORKSPACE: $CM_BUILD_DIR/nx-cheats-source
+        ARCHIVE_PATH: $CM_BUILD_DIR/build/NXCheats.xcarchive
+        IPA_PATH: $CM_BUILD_DIR/build/ios/ipa/NX-Cheats-unsigned.ipa
+    scripts:
+      - name: Extrair o código-fonte enviado ao GitLab
+        script: |
+          rm -rf "$WORKSPACE"
+          mkdir -p "$WORKSPACE"
+          unzip -q "$CM_BUILD_DIR/$SOURCE_ARCHIVE" -d "$WORKSPACE"
+          test -f "$WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
+      - name: Arquivar o aplicativo sem assinatura
+        script: |
+          xcodebuild archive \
+            -project "$WORKSPACE/ThreeOneOSFive.xcodeproj" \
+            -scheme "3105" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$ARCHIVE_PATH" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+      - name: Empacotar a IPA sem assinatura
+        script: |
+          APP_PATH="$ARCHIVE_PATH/Products/Applications/3105.app"
+          test -d "$APP_PATH"
+          PAYLOAD_DIR="$CM_BUILD_DIR/build/Payload"
+          mkdir -p "$(dirname "$IPA_PATH")" "$PAYLOAD_DIR"
+          cp -R "$APP_PATH" "$PAYLOAD_DIR/"
+          ditto -c -k --sequesterRsrc --keepParent "$PAYLOAD_DIR" "$IPA_PATH"
+    artifacts:
+      - build/ios/ipa/NX-Cheats-unsigned.ipa
+      - build/NXCheats.xcarchive/**
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - $CM_BUILD_INITIATOR_EMAIL
+        notify:
+          success: true
+          failure: true

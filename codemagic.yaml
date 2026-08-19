@@ -10,7 +10,7 @@ workflows:
         ARCHIVE_PATH: $CM_BUILD_DIR/build/NXCheats.xcarchive
         IPA_PATH: $CM_BUILD_DIR/build/ios/ipa/NX-Cheats-unsigned.ipa
     scripts:
-      - name: Extrair o código-fonte enviado ao GitLab
+      - name: Extrair o código-fonte enviado ao GitHub
         script: |
           rm -rf "$WORKSPACE"
           mkdir -p "$WORKSPACE"
@@ -39,10 +39,3 @@ workflows:
       - build/ios/ipa/NX-Cheats-unsigned.ipa
       - build/NXCheats.xcarchive/**
       - /tmp/xcodebuild_logs/*.log
-    publishing:
-      email:
-        recipients:
-          - $CM_BUILD_INITIATOR_EMAIL
-        notify:
-          success: true
-          failure: true
